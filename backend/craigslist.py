@@ -39,22 +39,24 @@ def craigslist(zipcode, query=None, distance=20):
     # headers = {'Accept-Encoding': 'identity'}
 
     
-    if not query:
+    if query:
         request = get(url+f'/d/free-stuff/search/zip?postal={zipcode}&search_distance={distance}')
-        soup = BeautifulSoup(request.text, 'lxml')
-        posts = soup.find('ul', {'id': 'search-results'})
-        posts = posts.find_all('li', {'class': 'result-row'})
-        for post in posts:
-            href = post.find('a')['href']
-            image = post.find('img')
-            info = post.find('div', {'class': 'result-info'})
-            item = info.find('h3', {'class': 'result-heading'})
-            date = info.find('time', {'class': 'result-date'})
-            print(href, image, item.get_text(), date['datetime'])
-            print('*'*40)
-        # Search: /search/zip?query=test&search_distance=10&postal=95608
-        # General: /d/free-stuff/search/zip?postal=95608&search_distance=10
-       
-    return url
-    
-craigslist(95608)
+    else:
+        request = get(url+f'/search/zip?query={query}&search_distance={distance}&postal={zipcode}')
+        
+    soup = BeautifulSoup(request.text, 'lxml')
+    posts = soup.find('ul', {'id': 'search-results'})
+    posts = posts.find_all('li', {'class': 'result-row'})
+    for post in posts:
+        href = post.find('a')['href']
+        image = post.find('a')
+        info = post.find('div', {'class': 'result-info'})
+        item = info.find('h3', {'class': 'result-heading'})
+        date = info.find('time', {'class': 'result-date'})
+        print(href, image, item.get_text(), date['datetime'])
+        print('*'*40)
+        yield [href, info, image, item.get_text(), date['datetime']]      
+        
+           
+for post in craigslist(95608, query='couch'):
+    print(post)
